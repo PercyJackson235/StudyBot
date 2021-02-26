@@ -89,14 +89,14 @@ class StudyBot(commands.Bot):
         with closing(self.bot._db_conn.cursor()) as conn:
             async with self.bot._lock:
                 query = 'SELECT minutes FROM study_time WHERE name = ? AND server = ?'  # noqa: E501
-                conn.execute(query, (username, self.guild))
+                conn.execute(query, (username, str(self.guild)))
                 if conn.fetchone() is None:
                     query = 'INSERT INTO study_time (name, minutes, server)'
                     query += ' VALUES (?, ?, ?)'
-                    conn.execute(query, (username, 0, self.guild))
+                    conn.execute(query, (username, 0, str(self.guild)))
                 query = 'UPDATE study_time SET minutes = minutes + ? '
                 query += 'WHERE name = ? AND server = ?'
-                conn.execute(query, (minutes, username, self.guild))
+                conn.execute(query, (minutes, username, str(self.guild)))
                 self.bot._db_conn.commit()
         try:
             await self.reply(msg.format(*divmod(minutes, 60)), delete_after=120)  # noqa: E501
@@ -111,14 +111,14 @@ class StudyBot(commands.Bot):
         with closing(self.bot._db_conn.cursor()) as conn:
             async with self.bot._lock:
                 query = 'SELECT minutes FROM study_time WHERE name = ? AND server = ?'  # noqa: E501
-                conn.execute(query, (username, self.guild))
+                conn.execute(query, (username, str(self.guild)))
                 value = conn.fetchone()
                 if value is None:
                     query = 'INSERT INTO study_time (name, minutes, server) '
                     query += 'VALUES (?, ?, ?)'
-                    conn.execute(query, (username, 0, self.guild))
+                    conn.execute(query, (username, 0, str(self.guild)))
                     query = 'SELECT minutes FROM study_time WHERE name = ? AND server = ?'  # noqa: E501
-                    conn.execute(query, (username, self.guild))
+                    conn.execute(query, (username, str(self.guild)))
                     value = conn.fetchone()[0]
                 else:
                     value = value[0]
@@ -132,7 +132,7 @@ class StudyBot(commands.Bot):
         with closing(self.bot._db_conn.cursor()) as conn:
             async with self.bot._lock:
                 query = 'SELECT minutes FROM study_time WHERE server = ?'
-                conn.execute(query, (self.guild,))
+                conn.execute(query, (str(self.guild),))
                 value = sum(i[0] for i in conn.fetchall())
                 msg = "The total amount of time studying is {} hours"
                 msg += " and {} minutes."
