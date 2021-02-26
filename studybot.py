@@ -69,11 +69,11 @@ class StudyBot(commands.Bot):
             text = "Okay. I, {}, am shutting down"
             await self.bot.change_presence(status=Status.offline)
             await self.reply(text.format(self.bot.user), delete_after=10)
-            asyncio.sleep(15)
+            await asyncio.sleep(20)
             await self.bot.logout()
             return
         msg = "Sorry, you must have the bot-admin role to shutdown this bot."
-        await self.reply(msg)
+        await self.reply(msg, delete_after=15)
 
     @_command_list_adder
     @commands.command(name="add-time", help=help_dict.get('add-time'))
