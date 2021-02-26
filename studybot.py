@@ -60,7 +60,6 @@ class StudyBot(commands.Bot):
     @_command_list_adder
     @commands.command(help=help_dict.get('shutdown'))
     async def shutdown(self):
-        import time
         allowd = False
         # Commands are context objects and have bot as an object
         for role in self.author.roles:
@@ -70,7 +69,7 @@ class StudyBot(commands.Bot):
             text = "Okay. I, {}, am shutting down"
             await self.bot.change_presence(status=Status.offline)
             await self.reply(text.format(self.bot.user), delete_after=10)
-            time.sleep(15)
+            asyncio.sleep(15)
             await self.bot.logout()
             return
         msg = "Sorry, you must have the bot-admin role to shutdown this bot."
