@@ -95,8 +95,11 @@ class StudyBot(commands.Bot):
                 query = 'UPDATE study_time SET minutes = minutes + ? WHERE name = ?'  # noqa: E501
                 conn.execute(query, (minutes, username))
                 self.bot._db_conn.commit()
-        await self.reply(msg.format(*divmod(minutes, 60)), delete_after=120)
-        await self.message.delete(delay=120)
+        try:
+            await self.reply(msg.format(*divmod(minutes, 60)), delete_after=120)  # noqa: E501
+            await self.message.delete(delay=120)
+        except Exception as e:
+            print(repr(e))
 
     @_command_list_adder
     @commands.command(name="get-time", help=help_dict.get('get-time'))

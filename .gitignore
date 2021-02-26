@@ -132,4 +132,4 @@ dmypy.json
 *vscode*
 *vs/
 
-hours.pkl
+*.db
