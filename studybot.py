@@ -83,6 +83,9 @@ class StudyBot(commands.Bot):
                 await self.reply("'{}' is not a proper value".format(minutes))
                 return
             minutes = int(minutes)
+        if minutes < 0:
+            await self.reply("'{}' is not a proper value".format(minutes))
+            return
         msg = "Added {} hours and {} minutes."
         username = str(self.message.author)
         with closing(self.bot._db_conn.cursor()) as conn:
