@@ -133,3 +133,4 @@ dmypy.json
 *vs/
 
 *.db
+channel.txt
