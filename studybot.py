@@ -37,6 +37,11 @@ def proper_role(self, rolename: str = "bot-admin"):
     return False
 
 
+def log_writer(err: Exception, filename: str = "error.log"):
+    with open(filename, 'a') as f:
+        f.write("{}\n".format(repr(err)))
+
+
 def proper_channel(bot_channel: str, channels: Union[list, tuple]):
     for channel in channels:
         if bot_channel == channel.name:
@@ -86,7 +91,12 @@ class StudyBot(commands.Bot):
 
     async def on_ready(self):
         await self.change_presence(status=Status.online)
-        print(self, type(self), dir(self))
+        for server in self.guilds:
+            for channel in server.channels:
+                if channel.name == self._channel_name:
+                    msg = "{} is online.".format(self.user)
+                    await channel.send(msg)
+                    return
 
     @_command_list_adder
     @commands.command(help=help_dict.get('shutdown'))
@@ -109,14 +119,14 @@ class StudyBot(commands.Bot):
     @_command_list_adder
     @commands.command(name="set-channel")
     async def set_channel(self, name: str):
-        for i in (self.channel.guild.channels, self.channel.guild):
-            print(dir(i), i)
         if name not in (i.name for i in self.channel.guild.channels):
             await self.reply("{} is not a channel on this server".format(name))
             return
         if proper_role(self):
             self.bot._channel_name = name
             await self.reply("{} is set as the StudyBot Channel.".format(name))
+        else:
+            await self.reply("You do not have the right to change the Channel")
 
     @_command_list_adder
     @commands.command(name="add-time", help=help_dict.get('add-time'))
@@ -150,7 +160,7 @@ class StudyBot(commands.Bot):
         try:
             await self.reply(msg.format(*divmod(minutes, 60)))  # noqa: E501
         except Exception as e:
-            print(repr(e))
+            log_writer(e)
 
     @_command_list_adder
     @commands.command(name="get-time", help=help_dict.get('get-time'))
@@ -210,7 +220,6 @@ class StudyBot(commands.Bot):
             return
         self.bot._time_dict[key] = datetime.now()
         await self.reply("Okay. Started Timer.", delete_after=120)
-        print(self.bot._time_dict)
 
     @_command_list_adder
     @commands.command(name="stop-timer", help=help_dict.get('stop-timer'))
@@ -236,7 +245,6 @@ class StudyBot(commands.Bot):
         msg += " the proper amount of study time. If false please '!verify-"
         msg += "study False'."
         await self.reply(msg.format(minutes), delete_after=300)
-        print(self.bot._time_dict)
 
     @_command_list_adder
     @commands.command(name="verify-study", help=help_dict.get("verify-study"))
@@ -273,12 +281,11 @@ class StudyBot(commands.Bot):
             try:
                 await self.reply(msg.format(*divmod(minutes, 60)))  # noqa: E501
             except Exception as e:
-                print(repr(e))
+                log_writer(e)
         else:
             msg = "Okay. Discarding recorded study time."
             await self.reply(msg, delete_after=30)
         del self.bot._time_dict[key]
-        print(self.bot._time_dict)
 
 
 if __name__ == "__main__":
