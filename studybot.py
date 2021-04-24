@@ -55,13 +55,17 @@ class StudyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         self._db_conn = sqlite3.connect("server.db")
         self._lock = asyncio.Lock()
-        self._time_dict: dict[tuple, Union[datetime, int]] = {}
+        self._bot_stop = False
         self._channel_name = "bot-channel"
         self._bot_channel()
         super().__init__(*args, **kwargs)
         with closing(self._db_conn.cursor()) as conn:
             table = 'CREATE TABLE IF NOT EXISTS study_time '
             table += '(name text, minutes integer, server text)'
+            conn.execute(table)
+            self._db_conn.commit()
+            table = 'CREATE TABLE IF NOT EXISTS live_timer '
+            table += '(name text, server text, timestamp real)'
             conn.execute(table)
             self._db_conn.commit()
         for func in self._command_list:
@@ -112,9 +116,11 @@ class StudyBot(commands.Bot):
             await self.reply(text.format(self.bot.user))
             await asyncio.sleep(10)
             await self.bot.logout()
+            await self.close()
             return
         msg = "Sorry, you must have the bot-admin role to shutdown this bot."
         await self.reply(msg, delete_after=15)
+        await self.close()
 
     @_command_list_adder
     @commands.command(name="set-channel")
@@ -212,14 +218,35 @@ class StudyBot(commands.Bot):
             args = (type(self.bot).__name__, self.channel.name, self.bot._channel_name)  # noqa: E501
             await self.reply("{} doesn't respond on {}, only {}".format(*args))
             return
-        key = tuple(map(str, (self.author, self.channel, self.guild)))
-        if key in self.bot._time_dict:
-            msg = "You have already started the timer. Please end timer "
-            msg += "before starting another."
-            await self.reply(msg, delete_after=120)
-            return
-        self.bot._time_dict[key] = datetime.now()
+        timestamp = datetime.now().timestamp()
+        username, server = map(str, (self.author, self.guild))
+        with closing(self.bot._db_conn.cursor()) as conn:
+            async with self.bot._lock:
+                query = 'SELECT timestamp FROM live_timer WHERE name = ? AND server = ?'
+                conn.execute(query, (username, server))
+                result = conn.fetchone()
+                if result is None:
+                    query = 'INSERT INTO live_timer (name, server, timestamp) '
+                    query += 'VALUES (?, ?, ?)'
+                    conn.execute(query, (username, server, timestamp))
+                elif result[0] == 0.0:
+                    query = 'UPDATE live_timer SET timestamp = ? '
+                    query += 'WHERE name = ? AND server = ?'
+                    conn.execute(query, (timestamp, username, server))
+                elif bool(result[0]):
+                    await self.reply("Already started timer.", delete_after=120)
+                    self.bot._db_conn.commit()
+                    return
+                else:
+                    await self.reply("Sorry. Unexpected Error happend.")
+                    err = "In start_study, result is not None, 0.0, or timestamp."
+                    err += f"Username = {username}, Server = {server}, "
+                    err += f"timestamp = {timestamp}." 
+                    log_writer(err)
+                    self.bot._db_conn.commit()
+                    return
         await self.reply("Okay. Started Timer.", delete_after=120)
+        self.bot._db_conn.commit()
 
     @_command_list_adder
     @commands.command(name="stop-timer", help=help_dict.get('stop-timer'))
@@ -228,23 +255,42 @@ class StudyBot(commands.Bot):
             args = (type(self.bot).__name__, self.channel.name, self.bot._channel_name)  # noqa: E501
             await self.reply("{} doesn't respond on {}, only {}".format(*args))
             return
-        key = tuple(map(str, (self.author, self.channel, self.guild)))
-        if key not in self.bot._time_dict:
-            msg = "You have not started a timer. Please start one."
-            await self.reply(msg, delete_after=60)
-            return
-        elif isinstance(self.bot._time_dict[key], int):
-            msg = "Timer is not running. Either verify time or start timer."
-            await self.reply(msg, delete_after=60)
-            return
-        result = datetime.now() - self.bot._time_dict[key]
-        minutes, seconds = divmod(result.seconds, 60)
-        minutes += round(seconds / 60)
-        self.bot._time_dict[key] = minutes
+        username, server = map(str, (self.author, self.guild))
+        result = 0.0
+        minutes = 0
+        with closing(self.bot._db_conn.cursor()) as conn:
+            async with self.bot._lock:
+                query = 'SELECT timestamp FROM live_timer WHERE name = ? '
+                query += 'AND server = ?'
+                conn.execute(query, (username, server))
+                result = conn.fetchone()
+                if result is None:
+                    await self.reply("Never started timer.", delete_after=120)
+                    self.bot._db_conn.commit()
+                    return
+                elif result[0] == 0.0:
+                    await self.reply("Never started timer.", delete_after=120)
+                    self.bot._db_conn.commit()
+                    return
+                elif bool(result[0]):
+                    result = datetime.now() - datetime.fromtimestamp(result[0])
+                    minutes, seconds = divmod(result.seconds, 60)
+                    minutes += round(seconds / 60)
+                    query = 'UPDATE live_timer SET timestamp = ? '
+                    query += 'WHERE name = ? AND server = ?'
+                    conn.execute(query, (float(minutes), username, server))
+                else:
+                    await self.reply("Sorry. Unexpected Error happend.")
+                    err = "In stop_study, result is not None, 0.0, or timestamp."
+                    err += f"Username = {username} and Server = {server}"
+                    log_writer(err)
+                    self.bot._db_conn.commit()
+                    return
         msg = "Timer is stopped. Please '!verify-study True' if {} minutes is"
         msg += " the proper amount of study time. If false please '!verify-"
         msg += "study False'."
         await self.reply(msg.format(minutes), delete_after=300)
+        self.bot._db_conn.commit()
 
     @_command_list_adder
     @commands.command(name="verify-study", help=help_dict.get("verify-study"))
@@ -253,39 +299,55 @@ class StudyBot(commands.Bot):
             args = (type(self.bot).__name__, self.channel.name, self.bot._channel_name)  # noqa: E501
             await self.reply("{} doesn't respond on {}, only {}".format(*args))
             return
-        key = tuple(map(str, (self.author, self.channel, self.guild)))
-        if value:
-            username, guild = str(self.author), str(self.guild)
-            msg = "Added {} hours and {} minutes."
-            minutes = self.bot._time_dict.get(key)
-            if minutes is None:
-                errormsg = "Timer was never set. Cannot verify."
-                await self.reply(errormsg, delete_after=60)
-                return
-            elif not isinstance(minutes, int):
-                errormsg = "Timer was never stopped. Cannot verify."
-                await self.reply(errormsg, delete_after=60)
-                return
-            with closing(self.bot._db_conn.cursor()) as conn:
-                async with self.bot._lock:
-                    query = 'SELECT minutes FROM study_time WHERE name = ? AND server = ?'  # noqa: E501
-                    conn.execute(query, (username, guild))
-                    if conn.fetchone() is None:
-                        query = 'INSERT INTO study_time (name, minutes, server)'  # noqa: E501
-                        query += ' VALUES (?, ?, ?)'
-                        conn.execute(query, (username, 0, guild))
-                    query = 'UPDATE study_time SET minutes = minutes + ? '
+        username, server = map(str, (self.author, self.guild))
+        msg = "Added {} hours and {} minutes."
+        minutes = 0
+        with closing(self.bot._db_conn.cursor()) as conn:
+            async with self.bot._lock:
+                if value:
+                    query = 'SELECT timestamp FROM live_timer WHERE name = ? '
+                    query += 'AND server = ?'
+                    conn.execute(query, (username, server))
+                    result = conn.fetchone()
+                    if result[0] is None:
+                        errormsg = "Timer was never set. Cannot verify."
+                        await self.reply(errormsg, delete_after=60)
+                        self.bot._db_conn.commit()
+                        return
+                    elif result[0] == 0.0:
+                        errormsg = "Timer was never set. Cannot verify."
+                        await self.reply(errormsg, delete_after=60)
+                        self.bot._db_conn.commit()
+                        return
+                    elif bool(result[0]):
+                        if divmod(result[0], 1)[1] != 0.0:
+                            msg = "Timer was never stopped. Cannot verify."
+                            await self.reply(msg)
+                            self.bot._db_conn.commit()
+                            return
+                        result = minutes = int(result[0])
+                        query = 'UPDATE study_time SET minutes = minutes + ? '
+                        query += 'WHERE name = ? AND server = ?'
+                        conn.execute(query, (result, username, server))
+                        query = 'UPDATE live_timer SET timestamp = ? '
+                        query += 'WHERE name = ? AND server = ?'
+                        conn.execute(query, (0.0, username, server))
+                    else:
+                        await self.reply("Sorry. Unexpected Error happend.")
+                        msg = f"verify_study. Username = {username} and "
+                        msg += f"Server = {server}"
+                        log_writer(msg)
+                        self.bot._db_conn.commit()
+                        return
+                else:
+                    msg = "Okay. Discarding recorded study time."
+                    await self.reply(msg, delete_after=30)
+                    query = 'UPDATE live_timer SET timestamp = ? '
                     query += 'WHERE name = ? AND server = ?'
-                    conn.execute(query, (minutes, username, guild))
-                    self.bot._db_conn.commit()
-            try:
-                await self.reply(msg.format(*divmod(minutes, 60)))  # noqa: E501
-            except Exception as e:
-                log_writer(e)
-        else:
-            msg = "Okay. Discarding recorded study time."
-            await self.reply(msg, delete_after=30)
-        del self.bot._time_dict[key]
+                    conn.execute(query, (0.0, username, server))
+                    return
+        self.bot._db_conn.commit()
+        await self.reply(msg.format(*divmod(minutes, 60)))
 
 
 if __name__ == "__main__":
