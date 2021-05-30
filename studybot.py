@@ -57,7 +57,7 @@ async def invalid_channel(request: commands.Context, bot: commands.Bot):
     return False
 
 
-class AltHelp(DefaultHelpCommand):
+class AltHelp(commands.DefaultHelpCommand):
     async def send_pages(self):
         if not invalid_channel(self, self.bot):
             await super().send_pages()
