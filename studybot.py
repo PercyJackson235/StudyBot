@@ -57,6 +57,12 @@ async def invalid_channel(request: commands.Context, bot: commands.Bot):
     return False
 
 
+class AltHelp(DefaultHelpCommand):
+    async def send_pages(self):
+        if not invalid_channel(self, self.bot):
+            await super().send_pages()
+
+
 class StudyBot(commands.Bot):
     _command_list = command_list
 
@@ -371,5 +377,5 @@ class StudyBot(commands.Bot):
 
 
 if __name__ == "__main__":
-    with StudyBot("!") as bot:
+    with StudyBot("!", AltHelp()) as bot:
         bot.run(get_tokens()[0])
