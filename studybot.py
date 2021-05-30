@@ -114,7 +114,7 @@ class StudyBot(commands.Bot):
     @commands.command(help=help_dict.get('shutdown'))
     async def shutdown(self):
         # Commands are context objects and have bot as an object
-        if invalid_channel(self, self.bot):
+        if await invalid_channel(self, self.bot):
             return
         if proper_role(self):
             text = "Okay. I, {}, am shutting down"
@@ -131,7 +131,7 @@ class StudyBot(commands.Bot):
     @_command_list_adder
     @commands.command(name="set-channel")
     async def set_channel(self, name: str):
-        if invalid_channel(self, self.bot):
+        if await invalid_channel(self, self.bot):
             return
         if name not in (i.name for i in self.channel.guild.channels):
             await self.reply("{} is not a channel on this server".format(name))
@@ -145,7 +145,7 @@ class StudyBot(commands.Bot):
     @_command_list_adder
     @commands.command(name="add-time", help=help_dict.get('add-time'))
     async def add_time(self, minutes: Union[int, str] = 0):
-        if invalid_channel(self, self.bot):
+        if await invalid_channel(self, self.bot):
             return
         if self.channel.name != self.bot._channel_name:
             args = (type(self.bot).__name__, self.channel.name, self.bot._channel_name)  # noqa: E501
@@ -181,7 +181,7 @@ class StudyBot(commands.Bot):
     @_command_list_adder
     @commands.command(name="get-time", help=help_dict.get('get-time'))
     async def get_time(self):
-        if invalid_channel(self, self.bot):
+        if await invalid_channel(self, self.bot):
             return
         if self.channel.name != self.bot._channel_name:
             args = (type(self.bot).__name__, self.channel.name, self.bot._channel_name)  # noqa: E501
@@ -209,7 +209,7 @@ class StudyBot(commands.Bot):
     @_command_list_adder
     @commands.command(name="all-time", help=help_dict.get('all-time'))
     async def all_time(self):
-        if invalid_channel(self, self.bot):
+        if await invalid_channel(self, self.bot):
             return
         if self.channel.name != self.bot._channel_name:
             args = (type(self.bot).__name__, self.channel.name, self.bot._channel_name)  # noqa: E501
@@ -228,7 +228,7 @@ class StudyBot(commands.Bot):
     @_command_list_adder
     @commands.command(name="start-timer", help=help_dict.get('start-timer'))
     async def start_study(self):
-        if invalid_channel(self, self.bot):
+        if await invalid_channel(self, self.bot):
             return
         if self.channel.name != self.bot._channel_name:
             args = (type(self.bot).__name__, self.channel.name, self.bot._channel_name)  # noqa: E501
@@ -267,7 +267,7 @@ class StudyBot(commands.Bot):
     @_command_list_adder
     @commands.command(name="stop-timer", help=help_dict.get('stop-timer'))
     async def stop_study(self):
-        if invalid_channel(self, self.bot):
+        if await invalid_channel(self, self.bot):
             return
         if self.channel.name != self.bot._channel_name:
             args = (type(self.bot).__name__, self.channel.name, self.bot._channel_name)  # noqa: E501
@@ -313,7 +313,7 @@ class StudyBot(commands.Bot):
     @_command_list_adder
     @commands.command(name="verify-study", help=help_dict.get("verify-study"))
     async def verify(self, value: bool):
-        if invalid_channel(self, self.bot):
+        if await invalid_channel(self, self.bot):
             return
         if self.channel.name != self.bot._channel_name:
             args = (type(self.bot).__name__, self.channel.name, self.bot._channel_name)  # noqa: E501
