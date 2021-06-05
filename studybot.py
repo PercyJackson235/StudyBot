@@ -104,7 +104,8 @@ class StudyBot(commands.Bot):
         self._db_conn.commit()
         self._db_conn.close()
         if not self.is_closed():
-            self.logout()
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(self.close())
         self._bot_channel(self._channel_name)
 
     async def on_ready(self):
@@ -127,7 +128,7 @@ class StudyBot(commands.Bot):
             await self.bot.change_presence(status=Status.offline)
             await self.reply(text.format(self.bot.user))
             await asyncio.sleep(10)
-            await self.bot.logout()
+            await self.bot.close()
             await self.close()
             return
         msg = "Sorry, you must have the bot-admin role to shutdown this bot."
