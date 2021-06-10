@@ -319,7 +319,7 @@ class StudyBot(commands.Bot):
 
     @_command_list_adder
     @commands.command(name="verify-study", help=help_dict.get("verify-study"))
-    async def verify(self, value: bool):
+    async def verify(self, value: bool = True):
         if await invalid_channel(self, self.bot):
             return
         if self.channel.name != self.bot._channel_name:
