@@ -10,6 +10,7 @@ from datetime import datetime
 bot = commands.Bot(command_prefix = '!')
 admin_role_id = 814693343236980786
 command_list = []
+# This dict is referred to for getting the descriptions of commands for the !help command.
 help_dict = {'add-time': 'Add the personal amount of study time in minutes.',
              'get-time': 'Retrieves the personal amount of hours studied.',
              'all-time': 'Retrieves the total amount of study time.',
@@ -21,6 +22,8 @@ lock = asyncio.Lock()
 
 
 def get_token():
+    """Loads environment variables from dotenv files, and returns the value of the discord token.
+    :return: String from DISCORD_TOKEN key in .env file"""
     import os
     from dotenv import load_dotenv
     load_dotenv()
@@ -29,7 +32,8 @@ def get_token():
 
 
 def setup_database():
-    """Create the database table if it doesn't exist."""
+    """Create the database table if it doesn't exist.
+    :return: Nothing"""
     global db_conn 
     db_conn = sqlite3.connect('server.db')
     with closing(db_conn.cursor()) as conn:
@@ -52,15 +56,11 @@ class AltHelp(commands.DefaultHelpCommand):
     async def send_pages(self):
         await super().send_pages()
 
-
-async def on_ready(self):
-    await self.change_presence(status=Status.online)
-    for server in self.guilds:
-        for channel in server.channels:
-            if channel.name == self._channel_name:
-                msg = '{} is online.'.format(self.user)
-                await channel.send(msg)
-                return
+@bot.event
+async def on_ready():
+    msg = '{} is online.'.format(bot.user)
+    channel = bot.get_channel(816133808533012512)
+    await channel.send(msg)
 
 
 setup_database()
