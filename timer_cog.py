@@ -9,7 +9,7 @@ class Study_Timer(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    @commands.command(name="start-timer", help=studybot.help_dict.get('start-timer'))
+    @commands.command(name='start-timer', help=studybot.help_dict.get('start-timer'))
     async def start_study(self, ctx):
         timestamp = datetime.now().timestamp()
         username, server = map(str, (ctx.author, ctx.guild))
@@ -27,22 +27,22 @@ class Study_Timer(commands.Cog):
                     query += 'WHERE name = ? AND server = ?'
                     conn.execute(query, (timestamp, username, server))
                 elif bool(result[0]):
-                    await ctx.reply("Already started timer.", delete_after=120)
+                    await ctx.reply('Already started timer.', delete_after=120)
                     studybot.db_conn.commit()
                     return
                 else:
-                    await ctx.reply("Sorry. Unexpected Error happend.")
-                    err = "In start_study, result is not None, 0.0, or timestamp."
-                    err += f"Username = {username}, Server = {server}, "
-                    err += f"timestamp = {timestamp}." 
+                    await ctx.reply('Sorry. Unexpected Error happend.')
+                    err = 'In start_study, result is not None, 0.0, or timestamp.'
+                    err += f'Username = {username}, Server = {server}, '
+                    err += f'timestamp = {timestamp}.'
                     log_writer(err)
                     studybot.db_conn.commit()
                     return
-        await ctx.reply("Okay. Started Timer.", delete_after=120)
+        await ctx.reply('Okay. Started Timer.', delete_after=120)
         studybot.db_conn.commit()
 
 
-    @commands.command(name="stop-timer", help=studybot.help_dict.get('stop-timer'))
+    @commands.command(name='stop-timer', help=studybot.help_dict.get('stop-timer'))
     async def stop_study(self, ctx):
         username, server = map(str, (ctx.author, ctx.guild))
         result = 0.0
@@ -54,11 +54,11 @@ class Study_Timer(commands.Cog):
                 conn.execute(query, (username, server))
                 result = conn.fetchone()
                 if result is None:
-                    await ctx.reply("Never started timer.", delete_after=120)
+                    await ctx.reply('Never started timer.', delete_after=120)
                     studybot.db_conn.commit()
                     return
                 elif result[0] == 0.0:
-                    await ctx.reply("Never started timer.", delete_after=120)
+                    await ctx.reply('Never started timer.', delete_after=120)
                     studybot.db_conn.commit()
                     return
                 elif bool(result[0]):
@@ -69,23 +69,23 @@ class Study_Timer(commands.Cog):
                     query += 'WHERE name = ? AND server = ?'
                     conn.execute(query, (float(minutes), username, server))
                 else:
-                    await ctx.reply("Sorry. Unexpected Error happend.")
-                    err = "In stop_study, result is not None, 0.0, or timestamp."
-                    err += f"Username = {username} and Server = {server}"
+                    await ctx.reply('Sorry. Unexpected Error happend.')
+                    err = 'In stop_study, result is not None, 0.0, or timestamp.'
+                    err += f'Username = {username} and Server = {server}'
                     log_writer(err)
                     studybot.db_conn.commit()
                     return
-        msg = "Timer is stopped. Please '!verify-study' if {} minutes is"
-        msg += " the proper amount of study time. If false please '!verify-"
-        msg += "study False'."
+        msg = 'Timer is stopped. Please "!verify-study" if {} minutes is'
+        msg += ' the proper amount of study time. If false please "!verify-'
+        msg += 'study False".'
         await ctx.reply(msg.format(minutes), delete_after=300)
         studybot.db_conn.commit()
 
 
-    @commands.command(name="verify-study", help=studybot.help_dict.get("verify-study"))
+    @commands.command(name='verify-study', help=studybot.help_dict.get('verify-study'))
     async def verify(self, ctx, value: bool = True):
         username, server = map(str, (ctx.author, ctx.guild))
-        msg = "Added {} hours and {} minutes."
+        msg = 'Added {} hours and {} minutes.'
         minutes = 0
         with closing(studybot.db_conn.cursor()) as conn:
             async with studybot.lock:
@@ -95,18 +95,18 @@ class Study_Timer(commands.Cog):
                     conn.execute(query, (username, server))
                     result = conn.fetchone()
                     if result[0] is None:
-                        errormsg = "Timer was never set. Cannot verify."
+                        errormsg = 'Timer was never set. Cannot verify.'
                         await ctx.reply(errormsg, delete_after=60)
                         studybot.db_conn.commit()
                         return
                     elif result[0] == 0.0:
-                        errormsg = "Timer was never set. Cannot verify."
+                        errormsg = 'Timer was never set. Cannot verify.'
                         await ctx.reply(errormsg, delete_after=60)
                         studybot.db_conn.commit()
                         return
                     elif bool(result[0]):
                         if divmod(result[0], 1)[1] != 0.0:
-                            msg = "Timer was never stopped. Cannot verify."
+                            msg = 'Timer was never stopped. Cannot verify.'
                             await ctx.reply(msg)
                             studybot.db_conn.commit()
                             return
@@ -118,14 +118,14 @@ class Study_Timer(commands.Cog):
                         query += 'WHERE name = ? AND server = ?'
                         conn.execute(query, (0.0, username, server))
                     else:
-                        await ctx.reply("Sorry. Unexpected Error happend.")
-                        msg = f"verify_study. Username = {username} and "
-                        msg += f"Server = {server}"
+                        await ctx.reply('Sorry. Unexpected Error happend.')
+                        msg = f'verify_study. Username = {username} and '
+                        msg += f'Server = {server}'
                         log_writer(msg)
                         studybot.db_conn.commit()
                         return
                 else:
-                    msg = "Okay. Discarding recorded study time."
+                    msg = 'Okay. Discarding recorded study time.'
                     await ctx.reply(msg, delete_after=30)
                     query = 'UPDATE live_timer SET timestamp = ? '
                     query += 'WHERE name = ? AND server = ?'

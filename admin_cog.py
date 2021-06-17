@@ -11,7 +11,7 @@ class Admin_Commands(commands.Cog):
     @commands.command(help=studybot.help_dict.get('shutdown'))
     @commands.has_role(studybot.admin_role_id)
     async def shutdown(self, ctx):
-        text = "Okay. I, {}, am shutting down"
+        text = 'Okay. I, {}, am shutting down'
         await bot.change_presence(status=Status.offline)
         await ctx.reply(text.format(self.bot.user))
         await asyncio.sleep(10)
