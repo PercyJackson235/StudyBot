@@ -1,15 +1,12 @@
 #!/home/user/dev/StudyBot/venv/bin/python3
 from discord.ext import commands
-from discord import Status
 import sqlite3
 import asyncio
 from contextlib import closing
-from datetime import datetime
+from typing import Dict
 
 
 bot = commands.Bot(command_prefix = '!')
-admin_role_id = 814693343236980786
-command_list = []
 # This dict is referred to for getting the descriptions of commands for the !help command.
 help_dict = {'add-time': 'Add the personal amount of study time in minutes.',
              'get-time': 'Retrieves the personal amount of hours studied.',
@@ -21,21 +18,24 @@ help_dict = {'add-time': 'Add the personal amount of study time in minutes.',
 lock = asyncio.Lock()
 
 
-def get_token():
+def get_tokens() -> Dict[str, str]:
     """Loads environment variables from dotenv files, and returns the value of the discord token.
-    :return: String from DISCORD_TOKEN key in .env file"""
+    :return: Dictionary from DISCORD_TOKEN, ADMIN_ROLE_ID, and CHANNEL_ID key in .env file"""
     import os
     from dotenv import load_dotenv
     load_dotenv()
-    return(os.getenv('DISCORD_TOKEN'))
+    env_keys = ("DISCORD_TOKEN", "ADMIN_ROLE_ID", "CHANNEL_ID")
+    return {key: os.getenv(key) for key in env_keys}
 
 
+TOKENS = get_tokens()
+admin_role_id = int(TOKENS.get("ADMIN_ROLE_ID"))
 
-def setup_database():
+
+def setup_database() -> sqlite3.Connection:
     """Create the database table if it doesn't exist. 
     Also defines db_conn global variable for connecting to the db.
-    :return: Nothing"""
-    global db_conn 
+    :return: sqlite3.Connection"""
     db_conn = sqlite3.connect('server.db')
     with closing(db_conn.cursor()) as conn:
         table = 'CREATE TABLE IF NOT EXISTS study_time '
@@ -46,11 +46,12 @@ def setup_database():
         table += '(name text, server text, timestamp real)'
         db_conn.execute(table)
         db_conn.commit()
+    return db_conn
 
 
 def log_writer(err: Exception, filename: str = 'error.log'):
     """Writes to the log file 'error.log'
-    :return: Nothing"""
+    :return: None"""
     with open(filename, 'a') as f:
         f.write("{}\n".format(repr(err)))
 
@@ -58,23 +59,21 @@ def log_writer(err: Exception, filename: str = 'error.log'):
 @bot.event
 async def on_ready():
     msg = '{} is online.'.format(bot.user)
-    channel = bot.get_channel(816133808533012512)
+    channel = bot.get_channel(int(TOKENS.get("CHANNEL_ID")))
     await channel.send(msg)
 
 
-setup_database()
+db_conn = setup_database()
+
 if __name__ == '__main__':
     # Imports the cogs so the bot knows they exist.
-    cogs = ['admin_cog', 'time_tracker_cog', 'timer_cog']
+    cogs = {'admin_cog', 'time_tracker_cog', 'timer_cog'}
     for i in cogs:
         bot.load_extension(i)
     # Starts the bot.
     # Note: This blocks until the bot shuts down.
-    bot.run(get_token())
+    bot.run(TOKENS.get("DISCORD_TOKEN"))
 
     # Finish database stuff after the bot client disconnects.
     db_conn.commit()
     db_conn.close()
-
-
-
