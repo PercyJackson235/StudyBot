@@ -36,7 +36,7 @@ class Time_Tracking(commands.Cog):
         try:
             await ctx.reply(msg.format(*divmod(minutes, 60)))  # noqa: E501
         except Exception as e:
-            log_writer(e)
+            studybot.log_writer(e)
 
 
     @commands.command(name='get-time', help=studybot.help_dict.get('get-time'))

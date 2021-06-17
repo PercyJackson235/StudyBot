@@ -35,7 +35,7 @@ class Study_Timer(commands.Cog):
                     err = 'In start_study, result is not None, 0.0, or timestamp.'
                     err += f'Username = {username}, Server = {server}, '
                     err += f'timestamp = {timestamp}.'
-                    log_writer(err)
+                    studybot.log_writer(err)
                     studybot.db_conn.commit()
                     return
         await ctx.reply('Okay. Started Timer.', delete_after=120)
@@ -72,7 +72,7 @@ class Study_Timer(commands.Cog):
                     await ctx.reply('Sorry. Unexpected Error happend.')
                     err = 'In stop_study, result is not None, 0.0, or timestamp.'
                     err += f'Username = {username} and Server = {server}'
-                    log_writer(err)
+                    studybot.log_writer(err)
                     studybot.db_conn.commit()
                     return
         msg = 'Timer is stopped. Please "!verify-study" if {} minutes is'
@@ -121,7 +121,7 @@ class Study_Timer(commands.Cog):
                         await ctx.reply('Sorry. Unexpected Error happend.')
                         msg = f'verify_study. Username = {username} and '
                         msg += f'Server = {server}'
-                        log_writer(msg)
+                        studybot.log_writer(msg)
                         studybot.db_conn.commit()
                         return
                 else:

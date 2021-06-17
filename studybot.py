@@ -32,7 +32,8 @@ def get_token():
 
 
 def setup_database():
-    """Create the database table if it doesn't exist.
+    """Create the database table if it doesn't exist. 
+    Also defines db_conn global variable for connecting to the db.
     :return: Nothing"""
     global db_conn 
     db_conn = sqlite3.connect('server.db')
@@ -48,13 +49,11 @@ def setup_database():
 
 
 def log_writer(err: Exception, filename: str = 'error.log'):
+    """Writes to the log file 'error.log'
+    :return: Nothing"""
     with open(filename, 'a') as f:
         f.write("{}\n".format(repr(err)))
 
-
-class AltHelp(commands.DefaultHelpCommand):
-    async def send_pages(self):
-        await super().send_pages()
 
 @bot.event
 async def on_ready():
@@ -65,9 +64,12 @@ async def on_ready():
 
 setup_database()
 if __name__ == '__main__':
+    # Imports the cogs so the bot knows they exist.
     cogs = ['admin_cog', 'time_tracker_cog', 'timer_cog']
     for i in cogs:
         bot.load_extension(i)
+    # Starts the bot.
+    # Note: This blocks until the bot shuts down.
     bot.run(get_token())
 
     # Finish database stuff after the bot client disconnects.
