@@ -14,17 +14,18 @@ help_dict = {'add-time': 'Add the personal amount of study time in minutes.',
              'shutdown': 'Shuts down the Bot. Need bot-admin.',
              'start-timer': 'Starts study timer.',
              'stop-timer': 'Stops study timer.',
-             'verify-study': 'Verify the amount of study time: true or false.'}
+             'verify-study': 'Verify the amount of study time: true or false.',
+             'github-join': 'Invites your GitHub account to our GitHub organization.'}
 lock = asyncio.Lock()
 
 
 def get_tokens() -> Dict[str, str]:
-    """Loads environment variables from dotenv files, and returns the value of the discord token.
-    :return: Dictionary from DISCORD_TOKEN, ADMIN_ROLE_ID, and CHANNEL_ID key in .env file"""
+    """Loads environment variables from dotenv files, and returns them.
+    :return: Dictionary containing DISCORD_TOKEN, ADMIN_ROLE_ID, CHANNEL_ID, and GITHUB_API_KEY key in .env file"""
     import os
     from dotenv import load_dotenv
     load_dotenv()
-    env_keys = ("DISCORD_TOKEN", "ADMIN_ROLE_ID", "CHANNEL_ID")
+    env_keys = ("DISCORD_TOKEN", "ADMIN_ROLE_ID", "CHANNEL_ID", "GITHUB_API_KEY")
     return {key: os.getenv(key) for key in env_keys}
 
 
@@ -67,7 +68,7 @@ db_conn = setup_database()
 
 if __name__ == '__main__':
     # Imports the cogs so the bot knows they exist.
-    cogs = {'admin_cog', 'time_tracker_cog', 'timer_cog'}
+    cogs = {'admin_cog', 'time_tracker_cog', 'timer_cog', 'github_cog'}
     for i in cogs:
         bot.load_extension(i)
     # Starts the bot.
