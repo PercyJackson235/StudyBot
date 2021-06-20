@@ -1,4 +1,5 @@
 #!/home/user/dev/StudyBot/venv/bin/python3
+from discord import Intents
 from discord.ext import commands
 import sqlite3
 import asyncio
@@ -6,7 +7,9 @@ from contextlib import closing
 from typing import Dict
 
 
-bot = commands.Bot(command_prefix = '!')
+intents = Intents.default()
+intents.members = True
+bot = commands.Bot(command_prefix = '!', intents=intents)
 # This dict is referred to for getting the descriptions of commands for the !help command.
 help_dict = {'add-time': 'Add the personal amount of study time in minutes.',
              'get-time': 'Retrieves the personal amount of hours studied.',
