@@ -1,21 +1,20 @@
-import discord
 from discord.ext import commands
 import studybot
 from datetime import datetime
 from contextlib import closing
-from typing import Union
+
 
 class Study_Timer(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
+
     @commands.command(name='start-timer', help=studybot.help_dict.get('start-timer'))
     async def start_study(self, ctx):
         timestamp = datetime.now().timestamp()
         username, server = map(str, (ctx.author, ctx.guild))
         with closing(studybot.db_conn.cursor()) as conn:
             async with studybot.lock:
-                query = 'SELECT timestamp FROM live_timer WHERE name = ? AND server = ?'
+                query = 'SELECT timestamp FROM live_timer WHERE name = ? AND server = ?'  # noqa: E501
                 conn.execute(query, (username, server))
                 result = conn.fetchone()
                 if result is None:
@@ -40,7 +39,6 @@ class Study_Timer(commands.Cog):
                     return
         await ctx.reply('Okay. Started Timer.', delete_after=120)
         studybot.db_conn.commit()
-
 
     @commands.command(name='stop-timer', help=studybot.help_dict.get('stop-timer'))
     async def stop_study(self, ctx):
@@ -81,8 +79,7 @@ class Study_Timer(commands.Cog):
         await ctx.reply(msg.format(minutes), delete_after=300)
         studybot.db_conn.commit()
 
-
-    @commands.command(name='verify-study', help=studybot.help_dict.get('verify-study'))
+    @commands.command(name='verify-study', help=studybot.help_dict.get('verify-study'))  # noqa: E501
     async def verify(self, ctx, value: bool = True):
         username, server = map(str, (ctx.author, ctx.guild))
         msg = 'Added {} hours and {} minutes.'

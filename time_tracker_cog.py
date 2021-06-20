@@ -1,13 +1,12 @@
-import discord
 from discord.ext import commands
 from contextlib import closing
 from typing import Union
 import studybot
 
+
 class Time_Tracking(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
 
     @commands.command(name='add-time', help=studybot.help_dict.get('add-time'))
     async def add_time(self, ctx, minutes: Union[int, str] = 0):
@@ -38,7 +37,6 @@ class Time_Tracking(commands.Cog):
         except Exception as e:
             studybot.log_writer(e)
 
-
     @commands.command(name='get-time', help=studybot.help_dict.get('get-time'))
     async def get_time(self, ctx):
         username = str(ctx.author)
@@ -59,7 +57,6 @@ class Time_Tracking(commands.Cog):
                 msg = 'You have contributed {} hours and {} minutes to total.'
                 await ctx.reply(msg.format(*divmod(value, 60)))
                 studybot.db_conn.commit()
-
 
     @commands.command(name='all-time', help=studybot.help_dict.get('all-time'))
     async def all_time(self, ctx):

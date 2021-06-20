@@ -9,8 +9,9 @@ from typing import Dict
 
 intents = Intents.default()
 intents.members = True
-bot = commands.Bot(command_prefix = '!', intents=intents)
-# This dict is referred to for getting the descriptions of commands for the !help command.
+bot = commands.Bot(command_prefix='!', intents=intents)
+# This dict is referred to for getting the
+# descriptions of commands for the !help command.
 help_dict = {'add-time': 'Add the personal amount of study time in minutes.',
              'get-time': 'Retrieves the personal amount of hours studied.',
              'all-time': 'Retrieves the total amount of study time.',
@@ -23,7 +24,7 @@ lock = asyncio.Lock()
 
 def get_tokens() -> Dict[str, str]:
     """Loads environment variables from dotenv files, and returns the value of the discord token.
-    :return: Dictionary from DISCORD_TOKEN, ADMIN_ROLE_ID, and CHANNEL_ID key in .env file"""
+    \n:return: Dictionary from DISCORD_TOKEN, ADMIN_ROLE_ID, and CHANNEL_ID key in .env file"""  # noqa: E501
     import os
     from dotenv import load_dotenv
     load_dotenv()
@@ -36,7 +37,7 @@ admin_role_id = int(TOKENS.get("ADMIN_ROLE_ID"))
 
 
 def setup_database() -> sqlite3.Connection:
-    """Create the database table if it doesn't exist. 
+    """Create the database table if it doesn't exist.
     Also defines db_conn global variable for connecting to the db.
     :return: sqlite3.Connection"""
     db_conn = sqlite3.connect('server.db')
