@@ -43,11 +43,11 @@ def setup_database() -> sqlite3.Connection:
     db_conn = sqlite3.connect('server.db')
     with closing(db_conn.cursor()) as conn:
         table = 'CREATE TABLE IF NOT EXISTS study_time '
-        table += '(name text, minutes integer, server text)'
+        table += '(id integer, minutes integer, server text)'
         conn.execute(table)
         db_conn.commit()
         table = 'CREATE TABLE IF NOT EXISTS live_timer '
-        table += '(name text, server text, timestamp real)'
+        table += '(id integer, server text, timestamp real)'
         db_conn.execute(table)
         db_conn.commit()
     return db_conn
