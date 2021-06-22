@@ -12,9 +12,9 @@ class GitHub_Integration(commands.Cog):
         self.bot = bot
 
     @commands.command(name='github-join', help=studybot.help_dict.get('github-join'))
-    async def join(self, ctx, github_name='null'):
+    async def join(self, ctx, github_name=None):
         # Make sure they included the github_name arg, and send a response.
-        if github_name == 'null':
+        if not github_name:
             msg = 'You need to include your GitHub Username like this: '
             msg += '`!github-join StudyBot`'
             await ctx.message.reply(msg)
