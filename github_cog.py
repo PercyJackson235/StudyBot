@@ -54,6 +54,7 @@ class GitHub_Integration(commands.Cog):
                         # Add the Discord ID and the GitHub ID to the database table
                         query = 'INSERT INTO github_invites (discord_id, github_id) VALUES (?, ?)'
                         conn.execute(query, (ctx.author.id, g_user.id))
+                        studybot.db_conn.commit()
 
                         # Send a confirmation message in Discord.
                         await ctx.message.reply(f'Invited {g_user.login} to the GitHub Organization.')
@@ -61,7 +62,6 @@ class GitHub_Integration(commands.Cog):
                         msg = f'Cannot invite {g_user.login} to the organization, because you have already invited '
                         msg += 'another GitHub account. Please contact a moderator if this is a mistake.'
                         await ctx.message.reply(msg)
-                    studybot.db_conn.commit()
 
     @commands.command(name='github-reset', help=studybot.help_dict.get('github-reset'))
     @commands.has_role(studybot.admin_role_id)
