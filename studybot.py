@@ -21,11 +21,12 @@ lock = asyncio.Lock()
 
 def get_tokens() -> Dict[str, str]:
     """Loads environment variables from dotenv files, and returns them.
-    :return: Dictionary containing DISCORD_TOKEN, ADMIN_ROLE_ID, CHANNEL_ID, and GITHUB_API_KEY key in .env file"""
+    :return: Dictionary containing DISCORD_TOKEN, ADMIN_ROLE_ID, CHANNEL_ID, GITHUB_ORG_NAME,
+    and GITHUB_API_KEY key in .env file"""
     import os
     from dotenv import load_dotenv
     load_dotenv()
-    env_keys = ("DISCORD_TOKEN", "ADMIN_ROLE_ID", "CHANNEL_ID", "GITHUB_API_KEY")
+    env_keys = ("DISCORD_TOKEN", "ADMIN_ROLE_ID", "CHANNEL_ID", "GITHUB_ORG_NAME", "GITHUB_API_KEY")
     return {key: os.getenv(key) for key in env_keys}
 
 
@@ -39,12 +40,19 @@ def setup_database() -> sqlite3.Connection:
     :return: sqlite3.Connection"""
     db_conn = sqlite3.connect('server.db')
     with closing(db_conn.cursor()) as conn:
+        # Create study_time database table.
         table = 'CREATE TABLE IF NOT EXISTS study_time '
         table += '(name text, minutes integer, server text)'
         conn.execute(table)
         db_conn.commit()
+        # Create live_timer database table.
         table = 'CREATE TABLE IF NOT EXISTS live_timer '
         table += '(name text, server text, timestamp real)'
+        db_conn.execute(table)
+        db_conn.commit
+        # Create github_invites database table.
+        table = 'CREATE TABLE IF NOT EXISTS github_invites'
+        table += '(discord_id integer, github_id integer)'
         db_conn.execute(table)
         db_conn.commit()
     return db_conn
