@@ -1,4 +1,5 @@
 import discord
+import github.GithubException
 from discord.ext import commands
 from github import Github
 from contextlib import closing
@@ -42,11 +43,21 @@ class GitHub_Integration(commands.Cog):
                     conn.execute(query, (ctx.author.id, ))
                     value = conn.fetchone()
                     if value is None:
+
                         # Invite the user to the organization.
-                        g_org.invite_user(g_user)
+                        try:
+                            g_org.invite_user(g_user)
+                        except:
+                            msg = 'An unknown error occurred, and the user was not invited. '
+                            msg += 'Make sure that the account is not already in the GitHub Org, and contact a mod if '
+                            msg += 'the issue persists.'
+                            await ctx.message.reply(msg)
+                            return()
+
                         # Add the Discord ID and the GitHub ID to the database table
                         query = 'INSERT INTO github_invites (discord_id, github_id) VALUES (?, ?)'
                         conn.execute(query, (ctx.author.id, g_user.id))
+
                         # Send a confirmation message in Discord.
                         await ctx.message.reply(f'Invited {g_user.login} to the GitHub Organization.')
                     else:
@@ -61,25 +72,25 @@ class GitHub_Integration(commands.Cog):
         if not discord_user:
             await ctx.message.reply('You need to tag the user to reset their abilities.')
             return()
+
         # Find who the user previously invited to the org.
         with closing(studybot.db_conn.cursor()) as conn:
             async with studybot.lock:
                 query = 'SELECT github_id FROM github_invites WHERE discord_id = ?'
                 conn.execute(query, (discord_user.id, ))
                 value = conn.fetchone()
+
                 # If the user hasn't invited anyone
                 if value is None:
                     await ctx.message.reply('This user has not invited anyone to the org.')
                     return()
 
                 g = Github(studybot.TOKENS.get('GITHUB_API_KEY'))
-
-                # Gets the GitHub user object.
+                # Get the GitHub user object.
                 try:
                     g_user = g.get_user_by_id(int(value[0]))
                 except:
                     g_user = None
-
                 # Get the GitHub organization object.
                 try:
                     g_org = g.get_organization(studybot.github_org_name)
@@ -88,7 +99,7 @@ class GitHub_Integration(commands.Cog):
                     await ctx.message.reply(msg)
                     return ()
 
-                # Revoke the GitHub account's invite or Remove them from the Organization (if the user exists).
+                # Revoke the GitHub account's invite or remove them from the Organization (if the user exists).
                 if g_user:
                     g_org.remove_from_membership(g_user)
 
