@@ -1,4 +1,5 @@
 #!/home/user/dev/StudyBot/venv/bin/python3
+from discord import Intents
 from discord.ext import commands
 import sqlite3
 import asyncio
@@ -6,8 +7,11 @@ from contextlib import closing
 from typing import Dict
 
 
-bot = commands.Bot(command_prefix = '!')
-# This dict is referred to for getting the descriptions of commands for the !help command.
+intents = Intents.default()
+intents.members = True
+bot = commands.Bot(command_prefix='!', intents=intents)
+# This dict is referred to for getting the
+# descriptions of commands for the !help command.
 help_dict = {'add-time': 'Add the personal amount of study time in minutes.',
              'get-time': 'Retrieves the personal amount of hours studied.',
              'all-time': 'Retrieves the total amount of study time.',
@@ -20,9 +24,9 @@ lock = asyncio.Lock()
 
 
 def get_tokens() -> Dict[str, str]:
-    """Loads environment variables from dotenv files, and returns them.
-    :return: Dictionary containing DISCORD_TOKEN, ADMIN_ROLE_ID, CHANNEL_ID, GITHUB_ORG_NAME,
-    and GITHUB_API_KEY key in .env file"""
+    """Loads environment variables from dotenv files, and returns the value of the discord token.
+    \n:return: Dictionary containing DISCORD_TOKEN, ADMIN_ROLE_ID, CHANNEL_ID, GITHUB ORG_NAME,
+     and GITHUB_API_KEY from .env file"""
     import os
     from dotenv import load_dotenv
     load_dotenv()
@@ -35,19 +39,19 @@ admin_role_id = int(TOKENS.get("ADMIN_ROLE_ID"))
 
 
 def setup_database() -> sqlite3.Connection:
-    """Create the database table if it doesn't exist. 
+    """Create the database table if it doesn't exist.
     Also defines db_conn global variable for connecting to the db.
     :return: sqlite3.Connection"""
     db_conn = sqlite3.connect('server.db')
     with closing(db_conn.cursor()) as conn:
         # Create study_time database table.
         table = 'CREATE TABLE IF NOT EXISTS study_time '
-        table += '(name text, minutes integer, server text)'
+        table += '(id integer, minutes integer, server text)'
         conn.execute(table)
         db_conn.commit()
         # Create live_timer database table.
         table = 'CREATE TABLE IF NOT EXISTS live_timer '
-        table += '(name text, server text, timestamp real)'
+        table += '(id integer, server text, timestamp real)'
         db_conn.execute(table)
         db_conn.commit
         # Create github_invites database table.
