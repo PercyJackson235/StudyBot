@@ -1,12 +1,24 @@
 import discord
-import github.GithubException
 from discord.ext import commands
 from github import Github
 from contextlib import closing
 import studybot
 
 
-# noinspection PyBroadException
+def check_prev_inv(discord_user):
+    """
+    Checks the database to see if/who a specific discord user has invited to the github organization.
+    :param discord_user: discord.User object.
+    :return: tuple containing the id of the github account the user invited, or None.
+    """
+    with closing(studybot.db_conn.cursor()) as conn:
+        async with studybot.lock:
+            query = 'SELECT github_id FROM github_invites WHERE discord_id = ?'
+            conn.execute(query, (discord_user.id,))
+            value = conn.fetchone()
+            return value
+
+
 class GitHub_Integration(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -37,31 +49,28 @@ class GitHub_Integration(commands.Cog):
                 return
 
             # Verify that the user has not already invited a GitHub account to the org.
+        if check_prev_inv(ctx.author) is None:
+            # Verify that the user is not already in the org.
+            if g_org.has_in_members(g_user):
+                await ctx.message.reply('That user is already in the organization, and cannot be invited.')
+                return
+            # Invite the user to the organization.
+            else:
+                g_org.invite_user(g_user)
+
+            # Add the Discord ID and the GitHub ID to the database table
             with closing(studybot.db_conn.cursor()) as conn:
                 async with studybot.lock:
-                    query = 'SELECT github_id FROM github_invites WHERE discord_id = ?'
-                    conn.execute(query, (ctx.author.id, ))
-                    value = conn.fetchone()
-                    if value is None:
-                        # Verify that the user is not already in the org.
-                        if g_org.has_in_members(g_user):
-                            await ctx.message.reply('That user is already in the organization, and cannot be invited.')
-                            return
-                        # Invite the user to the organization.
-                        else:
-                            g_org.invite_user(g_user)
+                    query = 'INSERT INTO github_invites (discord_id, github_id) VALUES (?, ?)'
+                    conn.execute(query, (ctx.author.id, g_user.id))
+                    studybot.db_conn.commit()
 
-                        # Add the Discord ID and the GitHub ID to the database table
-                        query = 'INSERT INTO github_invites (discord_id, github_id) VALUES (?, ?)'
-                        conn.execute(query, (ctx.author.id, g_user.id))
-                        studybot.db_conn.commit()
-
-                        # Send a confirmation message in Discord.
-                        await ctx.message.reply(f'Invited {g_user.login} to the GitHub Organization.')
-                    else:
-                        msg = f'Cannot invite {g_user.login} to the organization, because you have already invited '
-                        msg += 'another GitHub account. Please contact a moderator if this is a mistake.'
-                        await ctx.message.reply(msg)
+            # Send a confirmation message in Discord.
+            await ctx.message.reply(f'Invited {g_user.login} to the GitHub Organization.')
+        else:
+            msg = f'Cannot invite {g_user.login} to the organization, because you have already invited '
+            msg += 'another GitHub account. Please contact a moderator if this is a mistake.'
+            await ctx.message.reply(msg)
 
     @commands.command(name='github-reset', help=studybot.help_dict.get('github-reset'))
     @commands.has_role(studybot.admin_role_id)
@@ -71,40 +80,37 @@ class GitHub_Integration(commands.Cog):
             return
 
         # Find who the user previously invited to the org.
+        value = check_prev_inv(discord_user)
+        # If the user hasn't invited anyone
+        if value is None:
+            await ctx.message.reply('This user has not invited anyone to the org.')
+            return
+
+        g = Github(studybot.TOKENS.get('GITHUB_API_KEY'))
+        # Get the GitHub user object.
+        try:
+            g_user = g.get_user_by_id(int(value[0]))
+        except:
+            g_user = None
+        # Get the GitHub organization object.
+        try:
+            g_org = g.get_organization(studybot.github_org_name)
+        except:
+            msg = 'The GitHub organization cannot be found. Please try again later.'
+            await ctx.message.reply(msg)
+            return
+
+        # Revoke the GitHub account's invite or remove them from the Organization (if the user exists).
+        if g_user:
+            g_org.remove_from_membership(g_user)
+
+        # Delete the Database entry showing that the user invited someone
         with closing(studybot.db_conn.cursor()) as conn:
             async with studybot.lock:
-                query = 'SELECT github_id FROM github_invites WHERE discord_id = ?'
-                conn.execute(query, (discord_user.id, ))
-                value = conn.fetchone()
-
-                # If the user hasn't invited anyone
-                if value is None:
-                    await ctx.message.reply('This user has not invited anyone to the org.')
-                    return
-
-                g = Github(studybot.TOKENS.get('GITHUB_API_KEY'))
-                # Get the GitHub user object.
-                try:
-                    g_user = g.get_user_by_id(int(value[0]))
-                except:
-                    g_user = None
-                # Get the GitHub organization object.
-                try:
-                    g_org = g.get_organization(studybot.github_org_name)
-                except:
-                    msg = 'The GitHub organization cannot be found. Please try again later.'
-                    await ctx.message.reply(msg)
-                    return
-
-                # Revoke the GitHub account's invite or remove them from the Organization (if the user exists).
-                if g_user:
-                    g_org.remove_from_membership(g_user)
-
-                # Delete the Database entry showing that the user invited someone
                 query = 'DELETE FROM github_invites WHERE discord_id = ?'
                 conn.execute(query, (discord_user.id, ))
                 studybot.db_conn.commit()
-                await ctx.message.reply(f'Successfully reset {discord_user.mention}s ability to invite users')
+        await ctx.message.reply(f'Successfully reset {discord_user.mention}s ability to invite users')
 
 
 def setup(bot):
