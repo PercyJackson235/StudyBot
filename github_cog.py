@@ -26,7 +26,7 @@ class GitHub_Integration(commands.Cog):
                 g_user = g.get_user(github_name)
             except:
                 await ctx.message.reply('The GitHub user you requested cannot be found. Double-Check your spelling.')
-                return()
+                return
             # Get the organization object.
             try:
                 g_org = g.get_organization(studybot.github_org_name)
@@ -34,7 +34,7 @@ class GitHub_Integration(commands.Cog):
                 msg = 'The GitHub organization cannot be found. Please try again later, '
                 msg += 'or contact a mod if the issue persists.'
                 await ctx.message.reply(msg)
-                return()
+                return
 
             # Verify that the user has not already invited a GitHub account to the org.
             with closing(studybot.db_conn.cursor()) as conn:
@@ -46,7 +46,7 @@ class GitHub_Integration(commands.Cog):
                         # Verify that the user is not already in the org.
                         if g_org.has_in_members(g_user):
                             await ctx.message.reply('That user is already in the organization, and cannot be invited.')
-                            return()
+                            return
                         # Invite the user to the organization.
                         else:
                             g_org.invite_user(g_user)
@@ -68,7 +68,7 @@ class GitHub_Integration(commands.Cog):
     async def reset_user(self, ctx, discord_user: discord.User = None):
         if not discord_user:
             await ctx.message.reply('You need to tag the user to reset their abilities.')
-            return()
+            return
 
         # Find who the user previously invited to the org.
         with closing(studybot.db_conn.cursor()) as conn:
@@ -80,7 +80,7 @@ class GitHub_Integration(commands.Cog):
                 # If the user hasn't invited anyone
                 if value is None:
                     await ctx.message.reply('This user has not invited anyone to the org.')
-                    return()
+                    return
 
                 g = Github(studybot.TOKENS.get('GITHUB_API_KEY'))
                 # Get the GitHub user object.
@@ -94,7 +94,7 @@ class GitHub_Integration(commands.Cog):
                 except:
                     msg = 'The GitHub organization cannot be found. Please try again later.'
                     await ctx.message.reply(msg)
-                    return ()
+                    return
 
                 # Revoke the GitHub account's invite or remove them from the Organization (if the user exists).
                 if g_user:
