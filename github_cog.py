@@ -43,16 +43,13 @@ class GitHub_Integration(commands.Cog):
                     conn.execute(query, (ctx.author.id, ))
                     value = conn.fetchone()
                     if value is None:
-
-                        # Invite the user to the organization.
-                        try:
-                            g_org.invite_user(g_user)
-                        except:
-                            msg = 'An unknown error occurred, and the user was not invited. '
-                            msg += 'Make sure that the account is not already in the GitHub Org, and contact a mod if '
-                            msg += 'the issue persists.'
-                            await ctx.message.reply(msg)
+                        # Verify that the user is not already in the org.
+                        if g_org.has_in_members(g_user):
+                            await ctx.message.reply('That user is already in the organization, and cannot be invited.')
                             return()
+                        # Invite the user to the organization.
+                        else:
+                            g_org.invite_user(g_user)
 
                         # Add the Discord ID and the GitHub ID to the database table
                         query = 'INSERT INTO github_invites (discord_id, github_id) VALUES (?, ?)'
