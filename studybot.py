@@ -19,7 +19,8 @@ help_dict = {'add-time': 'Add the personal amount of study time in minutes.',
              'start-timer': 'Starts study timer.',
              'stop-timer': 'Stops study timer.',
              'verify-study': 'Verify the amount of study time: true or false.',
-             'github-join': 'Invites your GitHub account to our GitHub organization.'}
+             'github-join': 'Invites your GitHub account to our GitHub organization.',
+             'github-reset': 'Allows a blocked user to invite an account it the org. Tag the user. Need bot-admin.'}
 lock = asyncio.Lock()
 
 
@@ -36,6 +37,7 @@ def get_tokens() -> Dict[str, str]:
 
 TOKENS = get_tokens()
 admin_role_id = int(TOKENS.get("ADMIN_ROLE_ID"))
+github_org_name = TOKENS.get("GITHUB_ORG_NAME")
 
 
 def setup_database() -> sqlite3.Connection:
@@ -53,7 +55,7 @@ def setup_database() -> sqlite3.Connection:
         table = 'CREATE TABLE IF NOT EXISTS live_timer '
         table += '(id integer, server text, timestamp real)'
         db_conn.execute(table)
-        db_conn.commit
+        db_conn.commit()
         # Create github_invites database table.
         table = 'CREATE TABLE IF NOT EXISTS github_invites'
         table += '(discord_id integer, github_id integer)'
