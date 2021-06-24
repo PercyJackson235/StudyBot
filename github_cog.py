@@ -19,7 +19,7 @@ def check_prev_inv(discord_user):
             return value
 
 
-class GitHub_Integration(commands.Cog):
+class GitHubIntegration(commands.Cog, name='GitHub Integration'):
     def __init__(self, bot):
         self.bot = bot
 
@@ -114,4 +114,4 @@ class GitHub_Integration(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(GitHub_Integration(bot))
+    bot.add_cog(GitHubIntegration(bot))
