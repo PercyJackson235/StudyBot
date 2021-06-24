@@ -32,16 +32,16 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
             await ctx.message.reply(msg)
             return
         else:
-            g = Github(studybot.TOKENS.get('GITHUB_API_KEY'))
+            github_session = Github(studybot.TOKENS.get('GITHUB_API_KEY'))
             # Get the user object.
             try:
-                g_user = g.get_user(github_name)
+                github_user = github_session.get_user(github_name)
             except:
                 await ctx.message.reply('The GitHub user you requested cannot be found. Double-Check your spelling.')
                 return
             # Get the organization object.
             try:
-                g_org = g.get_organization(studybot.github_org_name)
+                placement_org = github_session.get_organization(studybot.github_org_name)
             except:
                 msg = 'The GitHub organization cannot be found. Please try again later, '
                 msg += 'or contact a mod if the issue persists.'
@@ -51,24 +51,24 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
             # Verify that the user has not already invited a GitHub account to the org.
         if check_prev_inv(ctx.author) is None:
             # Verify that the user is not already in the org.
-            if g_org.has_in_members(g_user):
+            if placement_org.has_in_members(github_user):
                 await ctx.message.reply('That user is already in the organization, and cannot be invited.')
                 return
             # Invite the user to the organization.
             else:
-                g_org.invite_user(g_user)
+                placement_org.invite_user(github_user)
 
             # Add the Discord ID and the GitHub ID to the database table
             with closing(studybot.db_conn.cursor()) as conn:
                 async with studybot.lock:
                     query = 'INSERT INTO github_invites (discord_id, github_id) VALUES (?, ?)'
-                    conn.execute(query, (ctx.author.id, g_user.id))
+                    conn.execute(query, (ctx.author.id, github_user.id))
                     studybot.db_conn.commit()
 
             # Send a confirmation message in Discord.
-            await ctx.message.reply(f'Invited {g_user.login} to the GitHub Organization.')
+            await ctx.message.reply(f'Invited {github_user.login} to the GitHub Organization.')
         else:
-            msg = f'Cannot invite {g_user.login} to the organization, because you have already invited '
+            msg = f'Cannot invite {github_user.login} to the organization, because you have already invited '
             msg += 'another GitHub account. Please contact a moderator if this is a mistake.'
             await ctx.message.reply(msg)
 
