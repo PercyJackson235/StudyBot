@@ -24,7 +24,7 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
         self.bot = bot
 
     @commands.command(name='github-join', help=studybot.help_dict.get('github-join'))
-    async def join(self, ctx, github_name=None):
+    async def join(self, ctx: commands.Context, github_name=None) -> None:
         # Make sure they included the github_name arg, and send a response.
         if not github_name:
             msg = 'You need to include your GitHub Username like this: '
@@ -74,7 +74,7 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
 
     @commands.command(name='github-reset', help=studybot.help_dict.get('github-reset'))
     @commands.has_role(studybot.admin_role_id)
-    async def reset_user(self, ctx, discord_user: discord.User = None):
+    async def reset_user(self, ctx: commands.Context, discord_user: discord.User = None) -> None:
         if not discord_user:
             await ctx.message.reply('You need to tag the user to reset their abilities.')
             return
