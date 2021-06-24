@@ -15,8 +15,8 @@ def check_prev_inv(discord_user):
         async with studybot.lock:
             query = 'SELECT github_id FROM github_invites WHERE discord_id = ?'
             conn.execute(query, (discord_user.id,))
-            value = conn.fetchone()
-            return value
+            db_output = conn.fetchone()
+            return db_output
 
 
 class GitHubIntegration(commands.Cog, name='GitHub Integration'):
@@ -80,16 +80,16 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
             return
 
         # Find who the user previously invited to the org.
-        value = check_prev_inv(discord_user)
+        db_output = check_prev_inv(discord_user)
         # If the user hasn't invited anyone
-        if value is None:
+        if db_output is None:
             await ctx.message.reply('This user has not invited anyone to the org.')
             return
 
         g = Github(studybot.TOKENS.get('GITHUB_API_KEY'))
         # Get the GitHub user object.
         try:
-            g_user = g.get_user_by_id(int(value[0]))
+            g_user = g.get_user_by_id(int(db_output[0]))
         except:
             g_user = None
         # Get the GitHub organization object.
