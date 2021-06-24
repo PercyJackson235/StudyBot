@@ -1,11 +1,12 @@
 import discord
 from discord.ext import commands
 from github import Github
+import github
 from contextlib import closing
 import studybot
 
 
-def check_prev_inv(discord_user):
+async def check_prev_inv(discord_user):
     """
     Checks the database to see if/who a specific discord user has invited to the github organization.
     :param discord_user: discord.User object.
@@ -36,20 +37,20 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
             # Get the user object.
             try:
                 github_user = github_session.get_user(github_name)
-            except:
+            except github.UnknownObjectException:
                 await ctx.message.reply('The GitHub user you requested cannot be found. Double-Check your spelling.')
                 return
             # Get the organization object.
             try:
                 placement_org = github_session.get_organization(studybot.github_org_name)
-            except:
+            except github.UnknownObjextException:
                 msg = 'The GitHub organization cannot be found. Please try again later, '
                 msg += 'or contact a mod if the issue persists.'
                 await ctx.message.reply(msg)
                 return
 
             # Verify that the user has not already invited a GitHub account to the org.
-        if check_prev_inv(ctx.author) is None:
+        if await check_prev_inv(ctx.author) is None:
             # Verify that the user is not already in the org.
             if placement_org.has_in_members(github_user):
                 await ctx.message.reply('That user is already in the organization, and cannot be invited.')
@@ -80,7 +81,7 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
             return
 
         # Find who the user previously invited to the org.
-        db_output = check_prev_inv(discord_user)
+        db_output = await check_prev_inv(discord_user)
         # If the user hasn't invited anyone
         if db_output is None:
             await ctx.message.reply('This user has not invited anyone to the org.')
@@ -90,12 +91,12 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
         # Get the GitHub user object.
         try:
             g_user = g.get_user_by_id(int(db_output[0]))
-        except:
+        except github.UnknownObjextException:
             g_user = None
         # Get the GitHub organization object.
         try:
             g_org = g.get_organization(studybot.github_org_name)
-        except:
+        except github.UnknownObjectException:
             msg = 'The GitHub organization cannot be found. Please try again later.'
             await ctx.message.reply(msg)
             return
