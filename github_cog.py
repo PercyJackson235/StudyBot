@@ -44,8 +44,8 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
             try:
                 placement_org = github_session.get_organization(studybot.github_org_name)
             except github.UnknownObjextException:
-                msg = 'The GitHub organization cannot be found. Please try again later, '
-                msg += 'or contact a mod if the issue persists.'
+                msg = 'The GitHub organization you are trying to join cannot be found.'
+                msg += ' Please try again later, and contact a mod if the issue persists.'
                 await ctx.message.reply(msg)
                 return
 
