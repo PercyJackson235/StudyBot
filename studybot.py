@@ -19,8 +19,8 @@ help_dict = {'add-time': 'Add the personal amount of study time in minutes.',
              'start-timer': 'Starts study timer.',
              'stop-timer': 'Stops study timer.',
              'verify-study': 'Verify the amount of study time: true or false.',
-             'github-join': 'Invites your GitHub account to our GitHub organization.',
-             'github-reset': 'Allows a blocked user to invite an account it the org. Tag the user. Need bot-admin.'}
+             'github-join': 'Invites your GitHub account to our GitHub organization.',  # noqa: E501
+             'github-reset': 'Allows a blocked user to invite an account it the org. Tag the user. Need bot-admin.'}  # noqa: E501
 lock = asyncio.Lock()
 
 
@@ -31,7 +31,8 @@ def get_tokens() -> Dict[str, str]:
     import os
     from dotenv import load_dotenv
     load_dotenv()
-    env_keys = ("DISCORD_TOKEN", "ADMIN_ROLE_ID", "CHANNEL_ID", "GITHUB_ORG_NAME", "GITHUB_API_KEY")
+    env_keys = ("DISCORD_TOKEN", "ADMIN_ROLE_ID", "CHANNEL_ID",
+                "GITHUB_ORG_NAME", "GITHUB_API_KEY")
     return {key: os.getenv(key) for key in env_keys}
 
 
@@ -64,7 +65,7 @@ def setup_database() -> sqlite3.Connection:
     return db_conn
 
 
-def log_writer(err: Exception, filename: str = 'error.log'):
+def log_writer(err: Exception, filename: str = 'error.log') -> None:
     """Writes to the log file 'error.log'
     :return: None"""
     with open(filename, 'a') as f:
@@ -72,7 +73,7 @@ def log_writer(err: Exception, filename: str = 'error.log'):
 
 
 @bot.event
-async def on_ready():
+async def on_ready() -> None:
     msg = '{} is online.'.format(bot.user)
     channel = bot.get_channel(int(TOKENS.get("CHANNEL_ID")))
     await channel.send(msg)
