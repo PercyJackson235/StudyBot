@@ -1,14 +1,9 @@
-import discord
 from discord.ext import commands
 from discord.ext.commands import UserNotFound, UserConverter
 from github import Github
 import github
 from contextlib import closing
 import studybot
-from typing import Union
-
-
-Name = Union[str, discord.User]
 
 
 async def check_prev_inv(discord_user):
