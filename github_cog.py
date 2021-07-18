@@ -7,7 +7,7 @@ import studybot
 from typing import Union
 
 
-async def check_prev_inv(discord_user) -> Union[]:
+async def check_prev_inv(discord_user) -> Union[int, None]:
     """
     Checks the database to see if/who a specific discord user has invited to the github organization.
     :param discord_user: discord.User object.
@@ -120,6 +120,8 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
             msg = studybot.StrFile(f"Github User {g_user.login} isn't a part of the Org.\n")  # noqa: E501
             print_exc(file=msg)
             studybot.error_logger.error(msg)
+            # bot-admin id = 814693343236980786
+            ctx.send("<@&814693343236980786> Check studybot, there may be an error.")
 
         # Delete the Database entry showing that the user invited someone
         with closing(studybot.db_conn.cursor()) as conn:
