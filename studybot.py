@@ -5,6 +5,7 @@ import sqlite3
 import asyncio
 from contextlib import closing
 from typing import Dict
+import logging
 
 
 intents = Intents.default()
@@ -65,11 +66,27 @@ def setup_database() -> sqlite3.Connection:
     return db_conn
 
 
-def log_writer(err: Exception, filename: str = 'error.log') -> None:
-    """Writes to the log file 'error.log'
-    :return: None"""
-    with open(filename, 'a') as f:
-        f.write("{}\n".format(repr(err)))
+def log_creater(filename: str = 'error.log') -> logging.Logger:
+    """Creates a logger for studybot that writes to file 'error.log'
+    :return: logging.Logger"""
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    handler = logging.FileHandler(filename)
+    fmt = logging.Formatter("{name}:{levelname} -> {asctime} - {message}", style='{')
+    handler.setFormatter(fmt)
+    logger.addHandler(handler)
+    return logger
+
+
+class StrFile(object):
+    def __init__(self, text: str = ''):
+        self._text = text
+
+    def write(self, text: str = '') -> None:
+        self._text += text
+
+    def __repr__(self) -> str:
+        return self._text
 
 
 @bot.event
@@ -80,6 +97,8 @@ async def on_ready() -> None:
 
 
 db_conn = setup_database()
+error_logger = log_creater()
+
 
 if __name__ == '__main__':
     # Imports the cogs so the bot knows they exist.

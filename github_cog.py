@@ -4,9 +4,10 @@ from github import Github
 import github
 from contextlib import closing
 import studybot
+from typing import Union
 
 
-async def check_prev_inv(discord_user):
+async def check_prev_inv(discord_user) -> Union[]:
     """
     Checks the database to see if/who a specific discord user has invited to the github organization.
     :param discord_user: discord.User object.
@@ -115,8 +116,10 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
             if g_user:
                 g_org.remove_from_membership(g_user)
         except github.GithubException:
-            await ctx.reply(f"Github User {g_user.login} isn't a part of the Org.")
-            return
+            from traceback import print_exc
+            msg = studybot.StrFile(f"Github User {g_user.login} isn't a part of the Org.\n")  # noqa: E501
+            print_exc(file=msg)
+            studybot.error_logger.error(msg)
 
         # Delete the Database entry showing that the user invited someone
         with closing(studybot.db_conn.cursor()) as conn:
