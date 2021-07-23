@@ -5,6 +5,10 @@ import github
 from contextlib import closing
 import studybot
 from typing import Union
+from datetime import datetime, timezone, timedelta
+
+
+EST = timezone(timedelta(hours=-4), 'EST')
 
 
 async def check_prev_inv(discord_user) -> Union[int, None]:
@@ -71,7 +75,12 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
                     studybot.db_conn.commit()
 
             # Send a confirmation message in Discord.
-            await ctx.reply(f'Invited {github_user.login} to the GitHub Organization.')  # noqa: E501
+            due_date = datetime.now(tz=EST).strftime("%B %d, %Y %Z")
+            msg = f"Invited {github_user.login} to the GitHub Organization. Please"
+            msg += "accept the invitation link - "
+            msg += "https://github.com/orgs/Python-Practice-Discord/invitation - "
+            msg += f"before {due_date} or the invitation will expire."
+            await ctx.reply(msg)
         else:
             msg = f"Cannot invite {github_user.login} to the organization, because "
             msg += "you have already invited another GitHub account. Please contact"
