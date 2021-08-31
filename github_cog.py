@@ -77,7 +77,7 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
             # Send a confirmation message in Discord.
             due_date = datetime.now(tz=EST).strftime("%B %d, %Y %Z")
             msg = f"Invited {github_user.login} to the GitHub Organization. Please"
-            msg += "accept the invitation link - "
+            msg += " accept the invitation link - "
             msg += "https://github.com/orgs/Python-Practice-Discord/invitation - "
             msg += f"before {due_date} or the invitation will expire."
             await ctx.reply(msg)
