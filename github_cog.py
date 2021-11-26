@@ -75,7 +75,8 @@ class GitHubIntegration(commands.Cog, name='GitHub Integration'):
                     studybot.db_conn.commit()
 
             # Send a confirmation message in Discord.
-            due_date = datetime.now(tz=EST).strftime("%B %d, %Y %Z")
+            due_date = datetime.now(tz=EST) + timedelta(weeks=1)
+            due_date = due_date.strftime("%B %d, %Y %Z")
             msg = f"Invited {github_user.login} to the GitHub Organization. Please"
             msg += " accept the invitation link - "
             msg += "https://github.com/orgs/Python-Practice-Discord/invitation - "
